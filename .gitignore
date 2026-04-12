@@ -1,0 +1,16 @@
+# Generated dashboards — output is produced by the agent, not committed
+output/
+
+# Power BI files — generated output, not source
+*.pbix
+*.pbip
+
+# CSV data files — may contain personal information
+*.csv
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
