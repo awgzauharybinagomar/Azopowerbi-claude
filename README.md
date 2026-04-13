@@ -63,16 +63,17 @@ The `.pbix` is a ZIP archive — it can't be built from scratch outside of Deskt
 
 ```
 powerbi-claude/
-  .mcp.json              ← MCP server config (pre-configured, do not edit)
-  README.md              ← This file
-  SETUP.md               ← Installation guide
-  CLAUDE.md              ← Agent instructions (read by Claude)
-  WORKING_PATTERNS.md    ← Technical reference: every confirmed working pattern
-  output/                ← Generated dashboards
+  .mcp.json                  ← MCP server config (pre-configured, do not edit)
+  README.md                  ← This file
+  SETUP.md                   ← Installation guide
+  CLAUDE.md                  ← Agent instructions (read by Claude)
+  WORKING_PATTERNS.md        ← Technical reference: every confirmed working pattern
+  CONTINUING_SESSIONS.md     ← How to resume work on an existing dashboard
+  output/                    ← Generated dashboards
     DashboardName.pbip
     DashboardName.Dataset/
     DashboardName.Report/
-    visual_registry.md   ← Maps hex IDs to human names (auto-generated per dashboard)
+    visual_registry.md       ← Maps hex IDs to human names (auto-generated per dashboard)
 ```
 
 ---

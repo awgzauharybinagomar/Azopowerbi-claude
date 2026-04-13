@@ -137,28 +137,32 @@ database_operations → ExportToBimFile
 
 ## 7. PBIP Folder Structure
 
+**Each dashboard lives in its own subfolder inside `output/`.** Never place dashboard files directly in `output/` root.
+
 ```
 output/
-  DashboardName.pbip
-  DashboardName.Dataset/
-    .platform
-    definition.pbidataset
-    model.bim                   ← exported by MCP, never written manually
-  DashboardName.Report/
-    .platform
-    definition.pbir             ← NOT definition.pbireport
-    StaticResources/
-      RegisteredResources/
-        ThemeName.json          ← custom theme file (name must match theme's "name" field)
-    definition/
-      report.json
-      pages/
-        <20-char-hex>/
-          page.json
-          visuals/
-            <20-char-hex>/
-              visual.json
-  visual_registry.md            ← maps hex IDs to human names
+  DashboardName/
+    DashboardName.pbip
+    DashboardName.Dataset/
+      .platform
+      definition.pbidataset
+      model.bim                   ← exported by MCP, never written manually
+    DashboardName.Report/
+      .platform
+      definition.pbir             ← NOT definition.pbireport
+      StaticResources/
+        RegisteredResources/
+          ThemeName.json          ← custom theme file (name must match theme's "name" field)
+      definition/
+        report.json
+        pages/
+          pages.json              ← REQUIRED: lists page order and active page
+          <20-char-hex>/
+            page.json
+            visuals/
+              <20-char-hex>/
+                visual.json
+    visual_registry.md            ← maps hex IDs to human names
 ```
 
 ---
@@ -437,6 +441,8 @@ Also include a page map and measure table.
 | "Expected $schema property" | `.platform` missing `$schema` | Add full `$schema` URL |
 | "Property version not defined" | `version` at top level of `.platform` | Move inside `config: { version, logicalId }` |
 | "Missing required artifact model.bim" | Used TMDL folder instead of BIM | Use `ExportToBimFile` |
+| Only 1 page shown, all visuals blank | Missing `pages.json` in `pages/` folder | Create `pages/pages.json` with `pageOrder` array and `activePageName` |
+| PBI Desktop regenerates page folders with new hex IDs, wiping visuals | PBI Desktop opened before `pages.json` existed | Always write `pages.json` before the first open. If PBI is already open for MCP work, write all visual files only after closing PBI Desktop |
 | Visuals blank on canvas | Old visual format (`projections`/`prototypeQuery`) | Use `query.queryState` format (Section 10) |
 | `CustomVisualNotFound` on slicer | Used `"slicerVisual"` as visualType | Use `"slicer"` + `objects` + `filterConfig` |
 | Slicer shows label only, no items | `orientation: 'Horizontal'` property used | Use `"1D"` (no quotes) for dropdown, or omit for list |
@@ -444,3 +450,277 @@ Also include a page map and measure table.
 | CSV quoted fields break | Used `QuoteStyle.None` | Use `QuoteStyle.Csv` |
 | Theme not applied, visuals revert to blue | Theme file named `Theme.json` but path is theme name | Name file `<ThemeName>.json` — path in report.json omits `.json` extension |
 | `reportVersionAtImport` missing error | `customTheme` block missing `reportVersionAtImport` | Add `"reportVersionAtImport": { "visual": "2.6.0", "report": "3.1.0", "page": "2.3.0" }` |
+
+---
+
+## 16. Multi-Table / Relational Data
+
+When the source data spans multiple CSV files, follow this order:
+
+### Design the model first
+Before creating any tables, identify:
+- **Fact tables** — transactions, events, observations (many rows, numeric columns)
+- **Dimension tables** — descriptive lookup tables (fewer rows, categorical columns)
+- **Relationships** — which column in the fact table is a foreign key to which dimension
+
+Standard star schema: one fact table in the center, dimension tables connected by single-direction relationships.
+
+### Create all tables before creating relationships
+MCP requires both sides of a relationship to exist before creating the relationship.
+
+```
+table_operations → Create  (for each table)
+partition_operations → RefreshWithXMLA  (immediately after each create)
+```
+
+### Relationship creation order
+Dimension → Fact (dimension is the "one" side):
+```
+relationship_operations → Create
+  fromTable: "DimProduct"      ← "one" side
+  toTable: "FactSales"         ← "many" side
+  fromColumn: "ProductId"
+  toColumn: "ProductId"
+  cardinality: "OneToMany"
+  crossFilteringBehavior: "Single"
+```
+
+Use `"Both"` for `crossFilteringBehavior` only when slicers on the fact table side need to filter dimensions. Default to `"Single"`.
+
+### Column counts per CSV
+Count columns carefully — Csv.Document requires an exact count:
+```
+Source = Csv.Document(File.Contents("..."), [Delimiter=",", Columns=7, ...])
+```
+Mismatched column count is a silent load error (table loads empty or truncated).
+
+### DAX measures in multi-table models
+Always qualify table references:
+```dax
+Total Sales = SUM(FactSales[Amount])
+Distinct Customers = DISTINCTCOUNT(FactSales[CustomerId])
+Top Category = CALCULATE([Total Sales], TOPN(1, DimProduct, [Total Sales]))
+```
+
+Cross-table filtering works automatically through relationships — CALCULATE respects the model's filter context.
+
+---
+
+## 17. Extended DAX Patterns
+
+All measures go in the `_Measures` calculated table. Use `DIVIDE()` for all ratios.
+
+### Counting and filtering
+```dax
+-- Count rows with a condition
+Filtered Count = CALCULATE(COUNTROWS(Table), Table[Status] = "Active")
+
+-- Count distinct values
+Unique Customers = DISTINCTCOUNT(FactSales[CustomerId])
+
+-- Count non-blank
+Non-Blank Count = COUNTROWS(FILTER(Table, NOT ISBLANK(Table[Column])))
+
+-- % of total
+Share % = DIVIDE(COUNTROWS(Table), CALCULATE(COUNTROWS(Table), ALL(Table)))
+```
+
+### Time intelligence (requires a Date/Calendar table)
+```dax
+-- Year to date
+Sales YTD = TOTALYTD([Total Sales], Calendar[Date])
+
+-- Month over month change
+MoM Change = [Total Sales] - CALCULATE([Total Sales], DATEADD(Calendar[Date], -1, MONTH))
+
+-- MoM % change
+MoM % = DIVIDE([MoM Change], CALCULATE([Total Sales], DATEADD(Calendar[Date], -1, MONTH)))
+
+-- Same period last year
+Sales SPLY = CALCULATE([Total Sales], SAMEPERIODLASTYEAR(Calendar[Date]))
+```
+
+To create a Calendar table via MCP:
+```
+calendar_operations → Create
+  startYear: 2020
+  endYear: 2025
+```
+Then create a relationship from Calendar[Date] to the fact table's date column.
+
+### Ranking and Top N
+```dax
+-- Rank (1 = highest)
+Category Rank = RANKX(ALL(DimProduct[Category]), [Total Sales], , DESC, DENSE)
+
+-- Top N flag
+Is Top 5 = IF(RANKX(ALL(Table[Name]), [Measure], , DESC, DENSE) <= 5, "Top 5", "Other")
+```
+
+### Conditional and lookup
+```dax
+-- Conditional value
+Risk Label = IF([Rate %] >= 0.5, "High", IF([Rate %] >= 0.2, "Medium", "Low"))
+
+-- Related table lookup
+Product Name = RELATED(DimProduct[Name])   -- use in calculated column, not measure
+```
+
+### Format strings reference
+| Type | formatString |
+|---|---|
+| Integer | `"#,##0"` |
+| Decimal 2dp | `"#,##0.00"` |
+| Currency USD | `"$ #,##0.00"` |
+| Percentage 1dp | `"0.0%"` |
+| Percentage 0dp | `"0%"` |
+| Date | `"dd/MM/yyyy"` |
+| Date + time | `"dd/MM/yyyy HH:mm"` |
+
+---
+
+## 18. Additional Visual Types
+
+### Line Chart (time series)
+```json
+{
+  "visual": {
+    "visualType": "lineChart",
+    "query": { "queryState": {
+      "Category": { "projections": [{
+        "field": { "Column": { "Expression": { "SourceRef": { "Entity": "Calendar" } }, "Property": "Date" } },
+        "queryRef": "Calendar.Date", "nativeQueryRef": "Date", "active": true
+      }]},
+      "Y": { "projections": [{
+        "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "_Measures" } }, "Property": "Total Sales" } },
+        "queryRef": "_Measures.Total Sales", "nativeQueryRef": "Total Sales"
+      }]}
+    }},
+    "drillFilterOtherVisuals": true
+  }
+}
+```
+
+### Table Visual
+Displays raw rows. Use `tableEx` (not `table`).
+```json
+{
+  "visual": {
+    "visualType": "tableEx",
+    "query": { "queryState": {
+      "Values": { "projections": [
+        {
+          "field": { "Column": { "Expression": { "SourceRef": { "Entity": "TableName" } }, "Property": "Col1" } },
+          "queryRef": "TableName.Col1", "nativeQueryRef": "Col1", "active": true
+        },
+        {
+          "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "_Measures" } }, "Property": "Measure1" } },
+          "queryRef": "_Measures.Measure1", "nativeQueryRef": "Measure1"
+        }
+      ]}
+    }},
+    "drillFilterOtherVisuals": true
+  }
+}
+```
+
+### Matrix Visual
+Rows, columns, and values — like a pivot table.
+```json
+{
+  "visual": {
+    "visualType": "matrix",
+    "query": { "queryState": {
+      "Rows": { "projections": [{
+        "field": { "Column": { "Expression": { "SourceRef": { "Entity": "DimProduct" } }, "Property": "Category" } },
+        "queryRef": "DimProduct.Category", "nativeQueryRef": "Category", "active": true
+      }]},
+      "Columns": { "projections": [{
+        "field": { "Column": { "Expression": { "SourceRef": { "Entity": "Calendar" } }, "Property": "Year" } },
+        "queryRef": "Calendar.Year", "nativeQueryRef": "Year", "active": true
+      }]},
+      "Values": { "projections": [{
+        "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "_Measures" } }, "Property": "Total Sales" } },
+        "queryRef": "_Measures.Total Sales", "nativeQueryRef": "Total Sales"
+      }]}
+    }},
+    "drillFilterOtherVisuals": true
+  }
+}
+```
+
+### Multi-row Card (several KPIs stacked)
+```json
+{
+  "visual": {
+    "visualType": "multiRowCard",
+    "query": { "queryState": {
+      "Values": { "projections": [
+        {
+          "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "_Measures" } }, "Property": "Measure1" } },
+          "queryRef": "_Measures.Measure1", "nativeQueryRef": "Measure1"
+        },
+        {
+          "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "_Measures" } }, "Property": "Measure2" } },
+          "queryRef": "_Measures.Measure2", "nativeQueryRef": "Measure2"
+        }
+      ]}
+    }},
+    "drillFilterOtherVisuals": true
+  }
+}
+```
+
+Note: `multiRowCard` is confirmed working as a visual type string. If it renders blank, discover the format via the manual add process (Section 11).
+
+---
+
+## 19. Diagnosing Blank or Wrong Visuals
+
+Use this decision tree when a visual is blank or shows an error after opening the `.pbip`.
+
+```
+Visual blank on canvas
+│
+├── Check: is model.bim present and non-empty?
+│   └── No → ExportToBimFile first
+│
+├── Check: did you refresh the table after creating it?
+│   └── No → RefreshWithXMLA, re-export model.bim
+│
+├── Check: does the visual reference the correct Entity name?
+│   └── Entity name must match the table name exactly (case-sensitive)
+│
+├── Check: does the visual reference the correct Property name?
+│   └── Property must match the column or measure name after any renames
+│
+├── Check: are you using query.queryState format (not prototypeQuery)?
+│   └── prototypeQuery format renders blank — use queryState
+│
+└── Still blank → use Section 11 discovery process
+    (add manually in Desktop, read the generated file)
+```
+
+When a visual shows data but wrong data:
+- Verify the measure DAX with `dax_query_operations → Execute`
+- Check that all tables referenced in the DAX have been refreshed
+- Check relationship direction — `crossFilteringBehavior: "Single"` filters only from "one" to "many"
+
+---
+
+## 20. Publishing to Power BI Service (optional)
+
+This agent produces local `.pbip` files only. To share or schedule refresh:
+
+1. Open the `.pbip` in Power BI Desktop
+2. Sign in to your Power BI account (top right)
+3. **Home → Publish**
+4. Choose a workspace
+5. Power BI Service will host the report and semantic model in the cloud
+
+**Limitations after publishing:**
+- CSV files on your local disk are not accessible from the cloud
+- To enable scheduled refresh: replace CSV sources with SharePoint, OneDrive, or a database connection in Power Query (via the Power BI Desktop Transform Data editor)
+- The `.pbix` single-file export (**File → Save As → Power BI Desktop file**) can also be uploaded directly to the Service via the web UI
+
+This agent does not automate the publishing step — it requires Desktop.
