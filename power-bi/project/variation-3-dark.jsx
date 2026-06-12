@@ -309,7 +309,7 @@ function V3_Donut() {
           return <path key={i} d={p} fill={colors[i]} opacity="0.9"/>;
         })}
         <text x="70" y="68" textAnchor="middle" fontSize="22" fontWeight="600"
-          fill={V3_C.text} fontFamily={V3_MONO}>287</text>
+          fill={V3_C.text} fontFamily={V3_MONO}>{window.SKM_DATA.kpis.students}</text>
         <text x="70" y="84" textAnchor="middle" fontSize="9" fill={V3_C.muted}
           letterSpacing="2" textTransform="uppercase">MURID</text>
       </svg>

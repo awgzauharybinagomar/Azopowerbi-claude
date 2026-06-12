@@ -51,7 +51,7 @@ function V1_Header() {
       <div style={{ flex: 1 }}/>
       {/* Filter chips */}
       <div style={{ display: 'flex', gap: 6 }}>
-        {['Sesi 2025', 'Semua Tahun', 'Semua Kelas'].map(t => (
+        {['Sesi 2023/2024', 'Semua Tahun', 'Semua Kelas'].map(t => (
           <div key={t} style={{
             border: `1px solid ${V1_C.border}`, padding: '5px 10px 5px 26px',
             borderRadius: 2, fontSize: 12, color: V1_C.text, background: '#FFFFFF',
@@ -255,7 +255,7 @@ function V1_DemographicsDonut() {
           acc += d.pct;
           return <path key={i} d={path} fill={colors[i]}/>;
         })}
-        <text x="80" y="78" textAnchor="middle" fontSize="22" fontWeight="600" fill={V1_C.text}>287</text>
+        <text x="80" y="78" textAnchor="middle" fontSize="22" fontWeight="600" fill={V1_C.text}>{window.SKM_DATA.kpis.students}</text>
         <text x="80" y="94" textAnchor="middle" fontSize="10" fill={V1_C.muted}>murid</text>
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0 }}>

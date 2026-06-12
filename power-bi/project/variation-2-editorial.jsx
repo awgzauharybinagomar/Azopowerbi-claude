@@ -45,7 +45,7 @@ function V2_Masthead() {
           {m.school}, {m.location}
         </div>
         <div style={{ fontFamily: V2_SERIF, fontStyle: 'italic', fontSize: 16, color: V2_C.muted, marginTop: 4 }}>
-          A school of 287, taught by 18, on the road to Sabah's western shore.
+          A school of {window.SKM_DATA.kpis.students}, taught by {window.SKM_DATA.kpis.teachers}, on the road to Sabah's western shore.
         </div>
       </div>
       <div style={{ textAlign: 'right', fontSize: 11, color: V2_C.muted, lineHeight: 1.6 }}>

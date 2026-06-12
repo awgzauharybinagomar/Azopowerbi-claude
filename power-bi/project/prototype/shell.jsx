@@ -190,7 +190,7 @@ function FilterBar() {
       <svg width="14" height="14" viewBox="0 0 14 14" style={{ color: 'var(--muted)', flex: '0 0 auto' }}>
         <path d="M1 2h12l-4.5 6v4l-3-1.5V8L1 2z" fill="none" stroke="currentColor" strokeWidth="1.2"/>
       </svg>
-      <FilterChip label={t.session + ' 2025'} fixed/>
+      <FilterChip label={t.session + ' 2023/2024'} fixed/>
       <FilterChipSelect
         label={t.allYears}
         value={filters.year}
@@ -298,7 +298,7 @@ function DateRangeChip() {
     { v: 'ytd',     l: lang === 'bm' ? 'Setakat Tahun' : 'Year to date' },
     { v: '30d',     l: lang === 'bm' ? '30 Hari Lalu'  : 'Last 30 days' },
     { v: '7d',      l: lang === 'bm' ? '7 Hari Lalu'   : 'Last 7 days' },
-    { v: 'session', l: lang === 'bm' ? 'Sesi 2025'     : 'Session 2025' },
+    { v: 'session', l: lang === 'bm' ? 'Sesi 2023/2024' : 'Session 2023/2024' },
   ];
   const cur = presets.find(p => p.v === filters.dateRange) || presets[0];
   return (

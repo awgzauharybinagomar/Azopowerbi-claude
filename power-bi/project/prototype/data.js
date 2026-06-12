@@ -1,36 +1,46 @@
 // Extended dataset for SK Melikai full prototype (all 8 pages + drill-through).
-// Numbers are illustrative but consistent across pages.
+//
+// SUMBER: laporan Power BI sebenar sekolah (publish-to-web), diekstrak 12 Jun 2026.
+// Data laporan = sesi 2023/2024, keputusan PBD Julai 2024.
+// Medan bertanda [SEBENAR] datang terus dari laporan itu.
+// Medan bertanda [ILUSTRASI] tiada dalam laporan sebenar dan kekal sebagai data rekaan
+// untuk demo reka bentuk sahaja. JANGAN petik medan ILUSTRASI sebagai fakta sekolah.
 
 window.SKM = {
+  // [SEBENAR] Maklumat Asas Sekolah
   meta: {
-    school: 'SK Melikai',
-    location: 'Menumbok, Sabah',
-    code: 'XBA3030',
-    session: '2025',
-    asOf: '15 Mei 2025',
-    headmaster: 'En. Ahmad Razali bin Hashim',
+    school: 'SK Melikai Menumbok',
+    location: 'Menumbok, Sabah',          // alamat: SK. Melikai, Peti Surat 08, 89767 Menumbok, Sabah
+    code: 'XBA6312',
+    session: '2023/2024',
+    asOf: 'Julai 2024',
+    headmaster: 'En. Abdul Din bin Hajim',
   },
 
   // ── KPIs ────────────────────────────────────────────────────────
   kpis: {
-    students: 287, studentsDelta: +6,
-    teachers: 18, teachersDelta: +1,
-    attendance: 94.2, attendanceDelta: +1.8,
-    passRate: 82.4, passRateDelta: +3.1,
-    literacy: 96, numeracy: 91,
-    b40Pct: 68, okuCount: 7,
-    budget: 142500, budgetUsed: 89200,   // RM
+    students: 125, studentsDelta: 0,      // [SEBENAR] L 67, P 58 (+19 prasekolah); delta tiada dalam laporan
+    teachers: 16, teachersDelta: 0,       // [SEBENAR] guru; bukan guru 4
+    attendance: 94.2, attendanceDelta: +1.8,   // [ILUSTRASI] tiada modul kehadiran dalam laporan
+    passRate: 73.0, passRateDelta: 0,     // [SEBENAR, anggaran] % TP3+ merentas 6 subjek teras (sampel Julai 2024)
+    literacy: 96, numeracy: 91,           // [ILUSTRASI] tiada data LINUS dalam laporan
+    b40Pct: 68, okuCount: 7,              // [ILUSTRASI]
+    budget: 142500, budgetUsed: 89200,    // [ILUSTRASI] RM
   },
 
   // ── Enrolment / classes ────────────────────────────────────────
+  // [SEBENAR] jumlah 125: L 67, P 58
   enrolByYear: [
-    { year: 'Tahun 1', boys: 24, girls: 22 },
-    { year: 'Tahun 2', boys: 26, girls: 21 },
-    { year: 'Tahun 3', boys: 23, girls: 25 },
-    { year: 'Tahun 4', boys: 28, girls: 26 },
-    { year: 'Tahun 5', boys: 21, girls: 24 },
-    { year: 'Tahun 6', boys: 24, girls: 23 },
+    { year: 'Tahun 1', boys:  8, girls: 11 },
+    { year: 'Tahun 2', boys:  8, girls:  9 },
+    { year: 'Tahun 3', boys: 17, girls:  9 },
+    { year: 'Tahun 4', boys:  9, girls: 13 },
+    { year: 'Tahun 5', boys: 10, girls:  9 },
+    { year: 'Tahun 6', boys: 15, girls:  7 },
   ],
+  // [ILUSTRASI] Kelas sebenar sekolah ialah 6 kelas nama planet:
+  // Tahap Satu = Marikh, Utarid, Zuhrah; Tahap Dua = Musytari, Uranus, Zuhal.
+  // Laporan tidak mendedahkan skor / kehadiran per kelas, jadi senarai demo dikekalkan.
   classes: [
     { id: '1C', cls: '1 Cemerlang', year: 1, n: 23, attn: 95.2, avg: 76.4, teacher: 'Cikgu Nurul Aisyah' },
     { id: '1G', cls: '1 Gemilang',  year: 1, n: 23, attn: 93.1, avg: 72.1, teacher: 'Cikgu Siti Rahmah' },
@@ -47,11 +57,18 @@ window.SKM = {
   ],
 
   // ── Demographics ───────────────────────────────────────────────
+  // [SEBENAR] Bilangan murid mengikut kaum (5 teratas + lain-lain; 22 kaum kesemuanya).
+  // Lain-lain: Kadazan 4, Suluk 4, Kedayan 3, Bugis 2, Iban 2, Jawa 2, Melanau 2,
+  // Sino-Native 2, Banjar 1, Bumiputera Sarawak 1, Cina 1, Filipinos 1, Indonesia 1,
+  // Melayu Sarawak 1, Murut 1, Sungai 1, Tidung 1.
+  // Agama: Islam 124, Kristian 1.
   ethnic: [
-    { group: 'Bumiputera Sabah', pct: 71, count: 204 },
-    { group: 'Melayu',           pct: 18, count:  52 },
-    { group: 'Cina',             pct:  7, count:  20 },
-    { group: 'Lain-lain',        pct:  4, count:  11 },
+    { group: 'Bisaya',           pct: 32.8, count: 41 },
+    { group: 'Brunei',           pct: 13.6, count: 17 },
+    { group: 'Kedayan (Sabah)',  pct: 11.2, count: 14 },
+    { group: 'Bajau',            pct:  9.6, count: 12 },
+    { group: 'Melayu',           pct:  8.8, count: 11 },
+    { group: 'Lain-lain',        pct: 24.0, count: 30 },
   ],
   socioeconomic: [
     { band: 'B40', pct: 68, count: 195 },
@@ -94,13 +111,17 @@ window.SKM = {
   ],
 
   // ── PBD by subject ─────────────────────────────────────────────
+  // [SEBENAR, anggaran] Keputusan PBD Julai 2024. % murid per Tahap Penguasaan,
+  // dikira daripada sampel 21 murid dalam jadual laporan. Sampel hanya merekod
+  // TP1 hingga TP4; t5/t6 = 0. Subjek penuh laporan: BM BI MT SN PAI PSV PK PJ
+  // AR MZ RBT SEJ PM (13 subjek); 6 subjek teras sahaja di sini.
   pbd: [
-    { subj: 'Bahasa Melayu',    t1: 2, t2: 6,  t3: 22, t4: 38, t5: 24, t6: 8 },
-    { subj: 'Bahasa Inggeris',  t1: 4, t2: 11, t3: 28, t4: 34, t5: 17, t6: 6 },
-    { subj: 'Matematik',        t1: 3, t2: 8,  t3: 24, t4: 36, t5: 21, t6: 8 },
-    { subj: 'Sains',            t1: 2, t2: 7,  t3: 26, t4: 38, t5: 20, t6: 7 },
-    { subj: 'Pendidikan Islam', t1: 1, t2: 4,  t3: 19, t4: 41, t5: 26, t6: 9 },
-    { subj: 'Sejarah',          t1: 3, t2: 9,  t3: 27, t4: 35, t5: 19, t6: 7 },
+    { subj: 'Bahasa Melayu',    t1: 5,  t2: 24, t3: 38, t4: 33, t5: 0, t6: 0 },
+    { subj: 'Bahasa Inggeris',  t1: 5,  t2: 29, t3: 38, t4: 28, t5: 0, t6: 0 },
+    { subj: 'Matematik',        t1: 5,  t2: 38, t3: 47, t4: 10, t5: 0, t6: 0 },
+    { subj: 'Sains',            t1: 5,  t2: 24, t3: 47, t4: 24, t5: 0, t6: 0 },
+    { subj: 'Pendidikan Islam', t1: 10, t2: 14, t3: 62, t4: 14, t5: 0, t6: 0 },
+    { subj: 'Sejarah',          t1: 0,  t2: 5,  t3: 33, t4: 62, t5: 0, t6: 0 },
   ],
   pbdTrend: [
     { sesi: '2022', pct: 71.2 },
@@ -110,8 +131,10 @@ window.SKM = {
   ],
 
   // ── Teachers ───────────────────────────────────────────────────
+  // Guru Besar [SEBENAR]: En. Abdul Din bin Hajim (gred DG41, opsyen B. Arab).
+  // Senarai guru lain [ILUSTRASI]; laporan sebenar ada 16 guru + 4 bukan guru.
   teachers: [
-    { name: 'En. Ahmad Razali',  role: 'Guru Besar',        subj: 'Pendidikan Islam', exp: 22, cpd: 28, load: 12 },
+    { name: 'En. Abdul Din bin Hajim', role: 'Guru Besar',  subj: 'Bahasa Arab',      exp: 22, cpd: 28, load: 12 },
     { name: 'Pn. Mariam Saleh',  role: 'PK Pentadbiran',    subj: 'Bahasa Melayu',    exp: 18, cpd: 32, load: 18 },
     { name: 'En. Rosli Ibrahim', role: 'PK HEM',            subj: 'Sains',            exp: 16, cpd: 24, load: 20 },
     { name: 'Pn. Sarimah Daud',  role: 'PK Kokurikulum',    subj: 'Pendidikan Jasmani', exp: 14, cpd: 30, load: 22 },
